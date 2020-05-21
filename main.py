@@ -42,19 +42,20 @@ def main():
         shows['tmdb_ids'] = tmdb_ids
         #print(shows.tmdb_ids)
         #shows_name = []
-        shows_data = {'name':[], 'poster':[], 'uid':[], 'desc':[]}
+        shows_data = {'name':[], 'poster':[], 'uid':[], 'desc':[], 'status':[]}
         for index, row in shows.iterrows():
             if row.tmdb_ids!=0:
                 similar = tv.similar(row.tmdb_ids)
             
                 for show in similar:
                     #shows_name.append(show.name)
-                    print(show.name)
+                    #print(show.name)
                     shows_data['name'].append(show.name)
                     shows_data['poster'].append(show.poster_path)
                     shows_data['desc'].append(show.overview)
                     uid =str(str(uuid.uuid1()).split('-')[0])
                     shows_data['uid'].append("t"+str(show.id)+"tv")
+                    shows_data['status'].append(row.status)
                     #print(uuid.uuid1())
 
                     #print(show.overview)
@@ -62,12 +63,12 @@ def main():
         #return df['name'].tolist()
         #df.to_csv('./shows.csv')
         eshow = pd.DataFrame(shows_data)
-        print(eshow.uid)
-        print(len(eshow))
+        print(eshow['status'])
+        #print(len(eshow))
         eshow.drop_duplicates(subset ="name", keep = False, inplace = True)
         print(len(eshow))
         return eshow
-@app.route('/add', methods=['POST'])
+@app.route('/adds', methods=['POST'])
 def add_series():
     #/api/series/lookup?term=The%20Blacklist&apikey=a45a1e77bedf4db29280d25ba6e47808
     
@@ -114,9 +115,31 @@ def add_series():
 
 @app.route('/', methods=['GET'])
 def index():
-    print(main())
-    return render_template("index.html", shows=main())
+    g = request.args.get('ongoing', False)
+    if g=='true':
+        sdata = show_data.loc[show_data['status'] == 'continuing']
+    elif g==False:
+        sdata = show_data
+    print(len(sdata))
+    """try:
+        #g = request.args.get('ongoing', False)
+        
+        #sdata = show_data['status']=='continuing'
+        if request.args.get('ongoing', False):
+            sdata = show_data.loc[show_data['status'] == 'continuing']
+        #sdata = show_data
+        #sdata = show_data['status']=='continuing'
+        #sdata = show_data#['status']=='continuing'
+    except KeyError as e:
+        print ('I got a KeyError - reason "%s"' % str(e))
+        sdata = show_data
+    except IndexError as e:
+        print ('I got an IndexError - reason "%s"' % str(e))
+        sdata = show_data
+    print(len(sdata))"""
+    return render_template("index.html", shows=show_data )
 if __name__ == "__main__":
+    show_data = main()
     app.run(host='0.0.0.0', port=3000, debug=True)
 
 
